@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#123b2e">
+<title>Santa's Office Adventure</title>
+<style>
+:root{--pine:#123b2e;--pine2:#1e5942;--red:#c83d43;--gold:#f5c85c;--cream:#fff8e9;--ink:#18372c}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;padding:20px;display:grid;place-items:center;color:var(--cream);
+font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:
+radial-gradient(circle at 8% 12%,#e76d5e 0 3px,transparent 4px),
+radial-gradient(circle at 85% 22%,#f5c85c 0 4px,transparent 5px),
+radial-gradient(circle at 20% 85%,#f5c85c 0 3px,transparent 4px),
+linear-gradient(145deg,#0d3026,#1c6248)}
+.card{width:min(100%,560px);padding:26px 22px 24px;text-align:center;border:3px solid var(--gold);
+border-radius:28px;background:linear-gradient(160deg,rgba(255,255,255,.12),rgba(255,255,255,.04));
+box-shadow:0 20px 55px #061b1599;position:relative;overflow:hidden}
+.card:before,.card:after{content:"✦";position:absolute;color:var(--gold);font-size:25px;opacity:.8}
+.card:before{top:14px;left:18px}.card:after{top:14px;right:18px}
+.kicker{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold)}
+.emoji{font-size:42px;margin:12px 0 4px}
+h1{font-size:clamp(30px,8vw,44px);line-height:1.04;margin:10px 0 12px}
+p{line-height:1.55;color:#fff0d2;margin:8px auto 18px;max-width:440px}
+.pill{display:inline-block;background:var(--gold);color:var(--ink);font-weight:900;font-size:11px;
+padding:7px 12px;border-radius:999px;letter-spacing:.07em;text-transform:uppercase}
+.song{font-size:19px;font-weight:750;margin:16px 0 18px}
+.controls{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:16px 0}
+button{border:0;border-radius:999px;padding:12px 17px;font-weight:800;font-size:13px;cursor:pointer}
+button:focus-visible{outline:3px solid white;outline-offset:3px}
+.primary{background:var(--gold);color:var(--ink);box-shadow:0 4px 0 #b38a32}
+.secondary{background:#ffffff20;color:white;border:1px solid #ffffff70}
+.stop-picker{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin:20px auto 12px;max-width:420px}
+.stop-picker button{padding:10px 4px;border-radius:13px;background:#ffffff1c;color:white;border:1px solid #ffffff55}
+.stop-picker button.current{background:var(--gold);color:var(--ink);border-color:var(--gold)}
+.stop-picker button.visited{border-color:#80d9a5}
+.progress{height:7px;border-radius:9px;background:#ffffff28;overflow:hidden;margin:18px 0 8px}
+.progress>span{display:block;height:100%;background:var(--gold);width:0;transition:width .2s}
+.hint{min-height:20px;font-size:12px;color:#ffe6ad;margin-top:12px}
+.small{font-size:11px;color:#ffffffa8}
+#celebration{padding:12px 0}
+.garland{font-size:24px;letter-spacing:8px;color:var(--gold);margin:12px 0}
+[hidden]{display:none!important}
+@media(max-width:380px){.stop-picker{gap:5px}.stop-picker button{font-size:12px;padding:9px 2px}}
+</style>
+</head>
+<body>
+<main class="card">
+  <section id="adventure">
+    <div class="kicker">Santa's Office Adventure</div>
+    <div class="emoji" id="emoji">🎄🎁</div>
+    <div class="pill" id="areaLabel">Stop 1 of 12</div>
+    <h1 id="screenTitle">Let the Christmas fun begin!</h1>
+    <p id="screenText">Explore the decorated office, choose any stop, and enjoy a Christmas song at every area.</p>
+    <div class="song" id="songTitle">🎵 Jingle Bells</div>
+    <div class="controls">
+      <button class="secondary" id="playBtn" type="button">▶ Start the music</button>
+      <button class="primary" id="nextBtn" type="button">Next stop →</button>
+    </div>
+    <div class="small">Or jump straight to any decorated area:</div>
+    <div class="stop-picker" id="stopPicker" aria-label="Choose an office area"></div>
+    <div class="progress"><span id="progressBar"></span></div>
+    <div class="hint" id="hint" aria-live="polite">Tap Start the music once. Music will then start as you move between stops.</div>
+  </section>
+  <section id="celebration" hidden>
+    <div class="garland">✦ ✧ ✦ ✧ ✦</div>
+    <div class="emoji">🎅🎄🎉</div>
+    <div class="pill">You did it!</div>
+    <h1>Merry Christmas!</h1>
+    <p>You've explored all twelve festive office stops. We hope your day is full of laughter, music, and a little Christmas magic!</p>
+    <div class="garland">🎁 ❄️ ⭐ ❄️ 🎁</div>
+    <button class="primary" id="restartBtn" type="button">Start the adventure again ↻</button>
+  </section>
+  <div class="small" style="margin-top:20px;letter-spacing:.12em">12 STOPS · ONE VERY MERRY OFFICE</div>
+</main>
+<audio id="player" preload="none"></audio>
+<script>
+// EDIT THE 12 ITEMS BELOW. Add matching MP3 files to the audio folder.
+const stops = [
+ {area:"Area 1",title:"Jingle All the Way!",message:"Your Christmas adventure starts here. Find the decorations and turn up the cheer!",song:"Jingle Bells",file:"audio/01.mp3",emoji:"🔔"},
+ {area:"Area 2",title:"Have a Holly Jolly Christmas!",message:"A little sparkle, a little holly, and another festive tune. Enjoy this stop!",song:"A Holly Jolly Christmas",file:"audio/02.mp3",emoji:"🌿"},
+ {area:"Area 3",title:"Let It Snow!",message:"Baby, it's warm outside—but this area is bringing the winter wonderland!",song:"Let It Snow",file:"audio/03.mp3",emoji:"❄️"},
+ {area:"Area 4",title:"Rockin' Around the Office!",message:"Take a look around and get into the Christmas groove.",song:"Rockin' Around the Christmas Tree",file:"audio/04.mp3",emoji:"🎸"},
+ {area:"Area 5",title:"Winter Wonderland",message:"A little winter magic is waiting for you at this decorated destination.",song:"Winter Wonderland",file:"audio/05.mp3",emoji:"⛄"},
+ {area:"Area 6",title:"Halfway to Holiday Cheer!",message:"You're halfway through the adventure. Keep spreading that Christmas cheer!",song:"It's Beginning to Look a Lot Like Christmas",file:"audio/06.mp3",emoji:"🎀"},
+ {area:"Area 7",title:"Santa Baby!",message:"Santa's making a list—and this stop is definitely on it!",song:"Santa Baby",file:"audio/07.mp3",emoji:"🎅"},
+ {area:"Area 8",title:"Feliz Navidad!",message:"Sending festive cheer from this office corner to everyone!",song:"Feliz Navidad",file:"audio/08.mp3",emoji:"🎊"},
+ {area:"Area 9",title:"A Merry Little Christmas",message:"Pause for a moment, enjoy the decorations, and soak up the season.",song:"Have Yourself a Merry Little Christmas",file:"audio/09.mp3",emoji:"🕯️"},
+ {area:"Area 10",title:"The Most Wonderful Time!",message:"Only a couple of stops left. The Christmas countdown is almost complete!",song:"It's the Most Wonderful Time of the Year",file:"audio/10.mp3",emoji:"✨"},
+ {area:"Area 11",title:"All I Want for Christmas...",message:"You're nearly at the grand finale. One more festive stop after this!",song:"All I Want for Christmas Is You",file:"audio/11.mp3",emoji:"💝"},
+ {area:"Area 12",title:"The Final Festive Stop!",message:"You've reached the last decorated area. Finish your adventure in style!",song:"We Wish You a Merry Christmas",file:"audio/12.mp3",emoji:"🎁"}
+];
+
+let current=0;
+let musicStarted=false;
+const visited=new Set();
+const player=document.getElementById("player");
+const picker=document.getElementById("stopPicker");
+const hint=document.getElementById("hint");
+const playBtn=document.getElementById("playBtn");
+const adventure=document.getElementById("adventure");
+const celebration=document.getElementById("celebration");
+
+stops.forEach((stop,i)=>{
+ const b=document.createElement("button");
+ b.type="button"; b.textContent=i+1; b.setAttribute("aria-label",`Go to ${stop.area}`);
+ b.addEventListener("click",()=>showStop(i,true));
+ picker.appendChild(b);
+});
+
+async function playCurrent(){
+ const stop=stops[current];
+ player.src=stop.file;
+ try{
+   await player.play();
+   musicStarted=true;
+   playBtn.textContent="Ⅱ Pause music";
+   hint.textContent="Music is playing. Choose any stop or tap Next!";
+ }catch(e){
+   hint.textContent="Tap Start the music to play this song. Check that its MP3 is in the audio folder.";
+ }
+}
+function updatePicker(){
+ [...picker.children].forEach((b,i)=>{
+   b.className=(i===current?"current ":"")+(visited.has(i)?"visited":"");
+   b.setAttribute("aria-current",i===current?"step":"false");
+ });
+ document.getElementById("progressBar").style.width=(visited.size/stops.length*100)+"%";
+}
+function showStop(i,autoPlay){
+ current=i;
+ const s=stops[current];
+ visited.add(current);
+ document.getElementById("areaLabel").textContent=`${s.area} · ${current+1} of 12`;
+ document.getElementById("emoji").textContent=s.emoji;
+ document.getElementById("screenTitle").textContent=s.title;
+ document.getElementById("screenText").textContent=s.message;
+ document.getElementById("songTitle").textContent="🎵 "+s.song;
+ document.getElementById("nextBtn").textContent=current===11?"Finish adventure 🎉":"Next stop →";
+ player.pause();
+ playBtn.textContent=musicStarted?"▶ Play music":"▶ Start the music";
+ updatePicker();
+ if(autoPlay && musicStarted) playCurrent();
+ else hint.textContent=musicStarted?"Choose Play music or move to another stop.":"Tap Start the music once. It will play automatically as you move between stops.";
+}
+playBtn.addEventListener("click",()=>{
+ if(!player.paused){player.pause();playBtn.textContent="▶ Play music";hint.textContent="Music paused.";return;}
+ musicStarted=true;playCurrent();
+});
+document.getElementById("nextBtn").addEventListener("click",()=>{
+ if(current===11){showCelebration();return;}
+ showStop(current+1,true);
+});
+player.addEventListener("ended",()=>{playBtn.textContent="▶ Play music";hint.textContent="Song finished. Explore another stop whenever you're ready!";});
+function showCelebration(){
+ player.pause();adventure.hidden=true;celebration.hidden=false;
+}
+document.getElementById("restartBtn").addEventListener("click",()=>{
+ celebration.hidden=true;adventure.hidden=false;visited.clear();musicStarted=false;showStop(0,false);
+});
+showStop(0,false);
+</script>
+</body>
+</html>
